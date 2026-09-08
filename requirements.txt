@@ -1,0 +1,5 @@
+roblox
+fastapi
+uvicorn
+pydantic
+colorama
