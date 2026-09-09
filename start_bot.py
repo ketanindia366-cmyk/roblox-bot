@@ -5,7 +5,7 @@ import subprocess
 REQUIRED_LIBRARIES = ["roblox", "fastapi", "uvicorn", "pydantic", "colorama"]
 
 def setup_and_launch():
-    print("🤖 --- ROBLOX DESKTOP AUTO-LAUNCH ENGINE --- 🤖\n")
+    print("🤖 --- ROBLOX DESKTOP APP ENGINE BOOTER --- 🤖\n")
     print("🔍 Verifying system environment libraries...")
     
     for library in REQUIRED_LIBRARIES:
@@ -13,6 +13,7 @@ def setup_and_launch():
             __import__(library)
         except ImportError:
             print(f"📦 Missing library '{library}'. Installing automatically...")
+            # Bypasses Windows Environment PATH bugs cleanly using 'py'
             subprocess.check_call(["py", "-m", "pip", "install", library, "--no-cache-dir", "--disable-pip-version-check"])
             
     print("✅ All system dependencies verified and ready!\n")
@@ -22,7 +23,7 @@ def setup_and_launch():
         input("\nPress Enter to exit...")
         sys.exit(1)
         
-    print("🚀 Launching Master Automation Core on http://127.0.0.1:8000 ...")
+    print("🚀 Launching Master Automation Core Dashboard...")
     print("----------------------------------------------------------------------")
     
     try:
