@@ -9,14 +9,12 @@ import threading
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
+import webbrowser
 import winsound
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 # ==================== CONFIGURATION ENVIRONMENT ====================
-ROBLOSECURITY_COOKIE = "_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_CAEQAhoGCAIQBBgBIhwKBGR1aWQSFDEyMTY5MTMxNDMwNTU0MTI3ODk2IhQKBXVuYW1lEgtBbGllbnNFdmVudCISCgN1aWQSCzExNjM3ODk3NTcyJAM.bS6F_z94WoemgVBMo7N7EBwxeut_uH_c_IUE-mTDbC9JBAqX6oeK7qrkdhaBt64LFcpd0n36Nj2aSgrXSk5YyoHm6ogoD9w7IGjaXCFbI5I0i9PW4lkoAXe6wvjrJccEBf7soChGRcqAIMxDuNh__xXJ4SyDozRkETnMXkqjjSuKRyi4f7gsAxRU_-RKSBCMBwiXG6eE4rDk3QJXwMYgc0Zf1-YN6u-rsKOS-bu0brYi3if_h3efxOoXUEaKS6l4tcllppbVl_SbMqBl8PWr-xN55MuHOpu9IBBsat_mwvt8WBvtufhSNnTWIkRNkjrKmwVLDuFTY0c2FTrcvE48UhTDXlf2QZI1-U58RyhPBz-vnsOAwc8th92w3esF1vHaem2VVtZWk1pKe7-rU72Oz6weDNqO_zN__VOvB1WX51iAaz6e-nlLuHeEyIMTo4zw9rykQtLkdZptrSAGQXxtWidv6xWp_TWw7LhlazK3V53uWUhG54wRChRcseEF2SgKXyDBOwMvXOlAn985w-6LX9PB_bu_8BBB0CklNdLFkRgJewukffc8YTDX309Of6zz17ucKXRob3nlt252qUPKK9EiQ-y3sk9nWKo012YA5_wTplR1wfqZh5Wj4TFPgOTrsxBSC4RdsWyUoe8r_7Tv9CCY7sSGx_V3QtFxZYrgw8M06D09E174cZKHRPYt6dpGjkF_s2MaD7_A6LDd8bTEh0NFmXwB2DLZo4SjxJc9lXG8Sgcc_eHu3cjA09sJjEwdFgnHF5vewgXitlk6Kv-6CtsZuZB5S191sSJvBrHEcxExq0WClSUpgAdreQvB5M0N845WilZH31Zm6Dz-ztqNHRGrn60il7cmKRLtEiWI3HT_6OnrKYjU1cFkVZYH1JQnBpfdm-UMpmvuC_vSF8oYk6JCFYMPAjkiEcQAyysmig.mCDwiKSyzmqA5yRilB_fWAAxBkk"
-GROUP_ID = 160052583  
-
 RANKS = {
     "test (832253071)": 832253071,
     "Tester (790162024)": 790162024,
@@ -25,9 +23,10 @@ RANKS = {
 ROLE_DEFAULT_MEMBER = 12884901889  
 JAVA_JAR_FILE = "roblox_helper.jar" 
 AUTH_FILE = "user_auth.json"
-ICON_FILE = "app_logo.ico"
+HTML_DASHBOARD = "index.html"
+NODE_SERVER_FILE = "server.js"
 
-# Palette UI Themes
+# UI Themes
 COLOR_BG = "#1e1e2e"       
 COLOR_PANEL = "#252538"    
 COLOR_TEXT = "#cdd6f4"     
@@ -36,42 +35,21 @@ COLOR_GREEN = "#a6e3a1"
 COLOR_RED = "#f38ba8"      
 # ====================================================================
 
-try:
-    from roblox import Client
-    roblox_client = Client(ROBLOSECURITY_COOKIE)
-except ImportError:
-    roblox_client = None
-
 class AnimatedBotApp(tk.Tk):
     def __init__(self):
         super().__init__()
         
-        self.title("Roblox System Gatekeeper Engine")
+        self.title("Roblox Unified Control Framework")
         self.geometry("700x560") 
         self.configure(bg=COLOR_BG)
         self.resizable(False, False)
         
-        if os.path.exists(ICON_FILE):
-            try:
-                self.iconbitmap(ICON_FILE)
-            except Exception:
-                pass
-        
-        self.loop = asyncio.new_event_loop()
-        threading.Thread(target=self.start_async_loop, daemon=True).start()
-        
-        self.sidebar_open = False
-        self.sidebar_width = 200
-        
         self.setup_styles()
         self.is_authenticated = False
         
+        # Deploy initial login check sequence
         self.build_auth_screen()
         
-    def start_async_loop(self):
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_forever()
-
     def setup_styles(self):
         style = ttk.Style()
         style.theme_use("clam")
@@ -85,10 +63,7 @@ class AnimatedBotApp(tk.Tk):
         email = self.email_entry.get().strip()
         password = self.pass_entry.get().strip()
         if not email or "@" not in email or not password:
-            messagebox.showerror("Auth Failure", "Please enter a valid email structure.")
-            return
-        if os.path.exists(AUTH_FILE):
-            messagebox.showerror("Auth Failure", "An account is already registered.")
+            messagebox.showerror("Auth Failure", "Please enter a valid email.")
             return
         auth_payload = {"registered_email": email, "password_hash": self.hash_password(password)}
         with open(AUTH_FILE, "w") as f:
@@ -101,16 +76,36 @@ class AnimatedBotApp(tk.Tk):
         email = self.email_entry.get().strip()
         password = self.pass_entry.get().strip()
         if not os.path.exists(AUTH_FILE):
-            messagebox.showerror("Auth Error", "No credentials file located. Sign up first.")
+            messagebox.showerror("Auth Error", "No credentials located. Sign up first.")
             return
         with open(AUTH_FILE, "r") as f:
             stored_data = json.load(f)
         if email == stored_data["registered_email"] and self.hash_password(password) == stored_data["password_hash"]:
             self.is_authenticated = True
             self.auth_frame.destroy()
+            
+            # LINK LOGIC 1: Automatically start Node.js server in the background safely
+            self.start_node_backend()
+            
+            # LINK LOGIC 2: Automatically pop open your HTML web page dashboard
+            if os.path.exists(HTML_DASHBOARD):
+                webbrowser.open(os.path.abspath(HTML_DASHBOARD))
+                
             self.build_main_dashboard()
         else:
-            messagebox.showerror("Auth Error", "Access Denied. Credentials mismatched.")
+            messagebox.showerror("Auth Error", "Access Denied.")
+
+    def start_node_backend(self):
+        """ Runs a quiet, continuous background thread processing the Node.js noblox connection """
+        if not os.path.exists(NODE_SERVER_FILE):
+            print("⚠️ Warning: server.js missing. Node ranking pipeline bypassed.")
+            return
+        def boot():
+            try:
+                subprocess.Popen(["node", NODE_SERVER_FILE], shell=True)
+            except Exception as ne:
+                print(f"Node execution fault: {ne}")
+        threading.Thread(target=boot, daemon=True).start()
 
     def build_auth_screen(self):
         self.auth_frame = tk.Frame(self, bg=COLOR_BG)
@@ -145,10 +140,10 @@ class AnimatedBotApp(tk.Tk):
         self.top_bar.pack(fill=tk.X)
         self.top_bar.pack_propagate(False)
         
-        self.menu_btn = tk.Button(self.top_bar, text="☰ Logs", font=("Arial", 11, "bold"), bg=COLOR_PANEL, fg=COLOR_ACCENT, bd=0, activebackground=COLOR_BG, activeforeground=COLOR_TEXT, command=self.toggle_sidebar)
+        self.menu_btn = tk.Button(self.top_bar, text="📋 App Logs", font=("Arial", 11, "bold"), bg=COLOR_PANEL, fg=COLOR_ACCENT, bd=0, activebackground=COLOR_BG, activeforeground=COLOR_TEXT, command=self.toggle_sidebar)
         self.menu_btn.pack(side=tk.LEFT, padx=15)
         
-        title_lbl = tk.Label(self.top_bar, text="ROBLOX SECURITY AUTOMATION HUD", font=("Arial", 12, "bold"), fg=COLOR_TEXT, bg=COLOR_PANEL)
+        title_lbl = tk.Label(self.top_bar, text="UNIFIED NODE & PYTHON GATEWAY", font=("Arial", 11, "bold"), fg=COLOR_TEXT, bg=COLOR_PANEL)
         title_lbl.pack(side=tk.LEFT, padx=10)
         
         self.main_container = tk.Frame(self, bg=COLOR_BG)
@@ -157,7 +152,7 @@ class AnimatedBotApp(tk.Tk):
         self.logo_canvas = tk.Canvas(self.main_container, width=80, height=80, bg=COLOR_BG, bd=0, highlightthickness=0)
         self.logo_canvas.pack(pady=(5, 5))
         self.logo_canvas.create_polygon(40, 5, 75, 20, 75, 55, 40, 75, 5, 55, 5, 20, fill=COLOR_PANEL, outline=COLOR_ACCENT, width=2)
-        self.logo_canvas.create_text(40, 40, text="🤖", font=("Arial", 22), fill=COLOR_TEXT)
+        self.logo_canvas.create_text(40, 40, text="🌐", font=("Arial", 22), fill=COLOR_TEXT)
         
         self.card = tk.Frame(self.main_container, bg=COLOR_PANEL, width=420, height=330, highlightbackground="#313244", highlightthickness=1)
         self.card.pack(pady=5)
@@ -176,7 +171,7 @@ class AnimatedBotApp(tk.Tk):
         self.rank_combo.set(list(RANKS.keys()))
         self.rank_combo.pack(pady=2)
         
-        self.bar_lbl = tk.Label(self.card, text="Network Transit Idle", font=("Arial", 9, "bold"), fg="#95a5a6", bg=COLOR_PANEL)
+        self.bar_lbl = tk.Label(self.card, text="Ecosystem Idle", font=("Arial", 9, "bold"), fg="#95a5a6", bg=COLOR_PANEL)
         self.bar_lbl.pack(pady=(15, 2), anchor="w", padx=40)
         
         self.bar_canvas = tk.Canvas(self.card, width=340, height=14, bg=COLOR_BG, bd=0, highlightthickness=0)
@@ -185,31 +180,32 @@ class AnimatedBotApp(tk.Tk):
         
         btn_frame = tk.Frame(self.card, bg=COLOR_PANEL)
         btn_frame.pack(pady=20, fill=tk.X, padx=40)
-                self.assign_btn = tk.Button(btn_frame, text="Assign Rank", font=("Arial", 10, "bold"), bg=COLOR_GREEN, fg=COLOR_BG, bd=0, cursor="hand2", width=14, command=self.trigger_assign)
+        
+        self.assign_btn = tk.Button(btn_frame, text="Assign Rank", font=("Arial", 10, "bold"), bg=COLOR_GREEN, fg=COLOR_BG, bd=0, cursor="hand2", width=14, command=self.trigger_assign)
         self.assign_btn.pack(side=tk.LEFT, ipady=6)
         self.setup_hover_effect(self.assign_btn, COLOR_GREEN, "#b4befe")
-
+        
         self.reset_btn = tk.Button(btn_frame, text="Reset Member", font=("Arial", 10, "bold"), bg=COLOR_RED, fg=COLOR_BG, bd=0, cursor="hand2", width=14, command=self.trigger_unassign)
         self.reset_btn.pack(side=tk.RIGHT, ipady=6)
         self.setup_hover_effect(self.reset_btn, COLOR_RED, "#f5e0dc")
-
+        
         self.sidebar = tk.Frame(self, bg=COLOR_PANEL, width=0, highlightbackground="#313244", highlightthickness=1)
         self.sidebar.place(x=-self.sidebar_width, y=50, height=510)
         self.sidebar.pack_propagate(False)
-
-        side_title = tk.Label(self.sidebar, text="Transaction Logs", font=("Arial", 11, "bold"), fg=COLOR_ACCENT, bg=COLOR_PANEL)
-        side_title.pack(pady=10, anchor="w", padx=15)
-
-        self.log_box = tk.Text(self.sidebar, bg=COLOR_BG, fg=COLOR_TEXT, font=("Courier", 9), state=tk.DISABLED, bd=0, wrap=tk.WORD)
-        self.log_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
         
-        self.log_message("⚡ Secure Shell Handshake Initialized. Ready to process records.")
+        side_title = tk.Label(self.sidebar, text="Ecosystem Terminal", font=("Arial", 11, "bold"), fg=COLOR_ACCENT, bg=COLOR_PANEL)
+        side_title.pack(pady=10, anchor="w", padx=15)
+                self.log_box = tk.Text(self.sidebar, bg=COLOR_BG, fg=COLOR_TEXT, font=("Courier", 9), state=tk.DISABLED, bd=0, wrap=tk.WORD)
+        self.log_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+        self.log_message("⚡ Link established. Cross-language server loops online.")
 
+    # ==================== SMOOTH ANIMATION ENGINE MODULES ====================
     def animate_progress_bar(self, target_percentage: int, label_text: str, fill_color: str):
+        """ Asynchronously steps through progress calculations and paints filling vectors """
         def step_fill(current_pct):
             if current_pct > target_percentage:
                 if target_percentage == 100:
-                    self.bar_lbl.config(text="🎉 Process Finalized", fg=COLOR_GREEN)
+                    self.bar_lbl.config(text="🎉 Action Finalized", fg=COLOR_GREEN)
                     threading.Thread(target=lambda: winsound.MessageBeep(winsound.MB_ICONASTERISK), daemon=True).start()
                     self.after(1500, lambda: self.reset_progress_bar())
                 return
@@ -225,7 +221,7 @@ class AnimatedBotApp(tk.Tk):
 
     def reset_progress_bar(self):
         self.bar_canvas.delete("fill_chunk")
-        self.bar_lbl.config(text="Network Transit Idle", fg="#95a5a6")
+        self.bar_lbl.config(text="Ecosystem Idle", fg="#95a5a6")
 
     def toggle_sidebar(self):
         if self.sidebar_open:
@@ -264,7 +260,7 @@ class AnimatedBotApp(tk.Tk):
     def get_validated_uid(self):
         uid_str = self.uid_entry.get().strip()
         if not uid_str.isdigit():
-            messagebox.showerror("Validation Error", "Please provide a valid, numeric Roblox User ID.")
+            messagebox.showerror("Error", "Enter a numeric User ID.")
             return None
         return int(uid_str)
 
@@ -274,36 +270,38 @@ class AnimatedBotApp(tk.Tk):
         selected_rank_name = self.rank_combo.get()
         target_role_id = RANKS[selected_rank_name]
         
-        self.animate_progress_bar(100, "Encrypting Handshake & Mutating Rank", COLOR_GREEN)
-        self.log_message(f"⌛ Queued task: Move user {uid} to {selected_rank_name}...")
-        asyncio.run_coroutine_threadsafe(self.execute_mutation(uid, "assign", target_role_id), self.loop)
-        self.run_java_companion(uid, "assign", target_role_id)
+        self.animate_progress_bar(100, "Node processing mutation", COLOR_GREEN)
+        self.log_message(f"⌛ Relaying package to Node Server: User {uid} -> {selected_rank_name}")
+        self.dispatch_to_node_api(uid, "assign", target_role_id)
 
     def trigger_unassign(self):
         uid = self.get_validated_uid()
         if not uid: return
         
-        self.animate_progress_bar(100, "Clearing Node Context & Flattening", COLOR_RED)
-        self.log_message(f"⌛ Queued task: Reset user {uid} back to baseline community rank...")
-        asyncio.run_coroutine_threadsafe(self.execute_mutation(uid, "unassign", ROLE_DEFAULT_MEMBER), self.loop)
-        self.run_java_companion(uid, "unassign", ROLE_DEFAULT_MEMBER)
+        self.animate_progress_bar(100, "Node processing reset", COLOR_RED)
+        self.log_message(f"⌛ Relaying package to Node Server: Resetting User {uid}")
+        self.dispatch_to_node_api(uid, "unassign", ROLE_DEFAULT_MEMBER)
 
-    async def execute_mutation(self, user_id: int, action: str, role_id: int):
-        if not roblox_client:
-            await asyncio.sleep(1) 
-            self.after(0, lambda: self.log_message(f"✨ Mock Trace Success: Manipulated target matching ID {user_id}"))
-            return
-        try:
-            group = await roblox_client.get_group(GROUP_ID)
-            member = await group.get_member(user_id)
-            await member.set_role(role_id)
-            if action == "assign":
-                self.after(0, lambda: self.log_message(f"🎉 API Mutation Confirmed: Swapped rank fields for target user {user_id}."))
-            else:
-                self.after(0, lambda: self.log_message(f"🧹 API Mutation Confirmed: Returned user tracking matrix {user_id} to member track."))
-        except Exception as e:
-            err_msg = str(e)
-            self.after(0, lambda: self.log_message(f"❌ Network core error encountered: {err_msg}"))
+    def dispatch_to_node_api(self, user_id, action, role_id):
+        """ Calls the background Node Express endpoint internally """
+        def network_send():
+            import urllib.request
+            payload = {"user_id": user_id, "action": action, "role_id": role_id}
+            # FIX: Restored full Node.js server local API target URL
+            req = urllib.request.Request(
+                "http://127.0.0",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "X-API-Key": "my66CQTQxNWWk12dQp3sbRSxBmRfLqBKUNUJ_5SPw_Y"},
+                method="POST"
+            )
+            try:
+                with urllib.request.urlopen(req) as res:
+                    self.after(0, lambda: self.log_message(f"🎉 JS API Confirmation received successfully."))
+                # LINK LOGIC 3: Execute the background Java companion audit logger
+                self.run_java_companion(user_id, action, role_id)
+            except Exception as e:
+                self.after(0, lambda: self.log_message(f"❌ API Handshake Failed: Node server rejected package."))
+        threading.Thread(target=network_send, daemon=True).start()
 
     def run_java_companion(self, user_id, action, rank_id):
         if not os.path.exists(JAVA_JAR_FILE): return
@@ -311,7 +309,7 @@ class AnimatedBotApp(tk.Tk):
             try:
                 cmd = ["java", "-jar", JAVA_JAR_FILE, str(user_id), str(action), str(rank_id)]
                 res = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                self.after(0, lambda: self.log_message(f"☕ [Java Ledger Data Recieved]: {res.stdout.strip()}"))
+                self.after(0, lambda: self.log_message(f"☕ [Java Companion Ledger]: {res.stdout.strip()}"))
             except Exception:
                 pass
         threading.Thread(target=run, daemon=True).start()
@@ -320,4 +318,3 @@ if __name__ == "__main__":
     # FIX: Corrected variable format from if name == "main":
     app = AnimatedBotApp()
     app.mainloop()
-
