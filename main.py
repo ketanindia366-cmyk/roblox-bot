@@ -25,7 +25,7 @@ RANKS = {
 ROLE_DEFAULT_MEMBER = 12884901889  
 JAVA_JAR_FILE = "roblox_helper.jar" 
 AUTH_FILE = "user_auth.json"
-ICON_FILE = "app_logo.ico" # The name your app shortcut icon targets
+ICON_FILE = "app_logo.ico"
 
 # Palette UI Themes
 COLOR_BG = "#1e1e2e"       
@@ -46,12 +46,11 @@ class AnimatedBotApp(tk.Tk):
     def __init__(self):
         super().__init__()
         
-        self.title("Roblox Group System Dashboard")
+        self.title("Roblox System Gatekeeper Engine")
         self.geometry("700x560") 
         self.configure(bg=COLOR_BG)
         self.resizable(False, False)
         
-        # Load your custom icon asset if present, fail cleanly if absent
         if os.path.exists(ICON_FILE):
             try:
                 self.iconbitmap(ICON_FILE)
@@ -142,7 +141,6 @@ class AnimatedBotApp(tk.Tk):
             signup_btn.pack(pady=20, ipady=4)
 
     def build_main_dashboard(self):
-        # Top Header Bar Panel Area
         self.top_bar = tk.Frame(self, bg=COLOR_PANEL, height=50)
         self.top_bar.pack(fill=tk.X)
         self.top_bar.pack_propagate(False)
@@ -156,16 +154,11 @@ class AnimatedBotApp(tk.Tk):
         self.main_container = tk.Frame(self, bg=COLOR_BG)
         self.main_container.pack(fill=tk.BOTH, expand=True, pady=10)
         
-        # ==================== ADVANCED CUSTOM BRANDING LOGO ====================
-        # Vectors painted directly onto canvas to ensure a beautiful logo loads immediately
         self.logo_canvas = tk.Canvas(self.main_container, width=80, height=80, bg=COLOR_BG, bd=0, highlightthickness=0)
         self.logo_canvas.pack(pady=(5, 5))
-        # Draws a custom glowing cyber-shield logo emblem on your app screen
         self.logo_canvas.create_polygon(40, 5, 75, 20, 75, 55, 40, 75, 5, 55, 5, 20, fill=COLOR_PANEL, outline=COLOR_ACCENT, width=2)
         self.logo_canvas.create_text(40, 40, text="🤖", font=("Arial", 22), fill=COLOR_TEXT)
-        # =======================================================================
         
-        # User Interaction Card Block Configuration
         self.card = tk.Frame(self.main_container, bg=COLOR_PANEL, width=420, height=330, highlightbackground="#313244", highlightthickness=1)
         self.card.pack(pady=5)
         self.card.pack_propagate(False)
@@ -183,3 +176,148 @@ class AnimatedBotApp(tk.Tk):
         self.rank_combo.set(list(RANKS.keys()))
         self.rank_combo.pack(pady=2)
         
+        self.bar_lbl = tk.Label(self.card, text="Network Transit Idle", font=("Arial", 9, "bold"), fg="#95a5a6", bg=COLOR_PANEL)
+        self.bar_lbl.pack(pady=(15, 2), anchor="w", padx=40)
+        
+        self.bar_canvas = tk.Canvas(self.card, width=340, height=14, bg=COLOR_BG, bd=0, highlightthickness=0)
+        self.bar_canvas.pack(pady=2)
+        self.bar_canvas.create_rectangle(0, 0, 340, 14, fill="#181825", width=0, tags="track")
+        
+        btn_frame = tk.Frame(self.card, bg=COLOR_PANEL)
+        btn_frame.pack(pady=20, fill=tk.X, padx=40)
+                self.assign_btn = tk.Button(btn_frame, text="Assign Rank", font=("Arial", 10, "bold"), bg=COLOR_GREEN, fg=COLOR_BG, bd=0, cursor="hand2", width=14, command=self.trigger_assign)
+        self.assign_btn.pack(side=tk.LEFT, ipady=6)
+        self.setup_hover_effect(self.assign_btn, COLOR_GREEN, "#b4befe")
+
+        self.reset_btn = tk.Button(btn_frame, text="Reset Member", font=("Arial", 10, "bold"), bg=COLOR_RED, fg=COLOR_BG, bd=0, cursor="hand2", width=14, command=self.trigger_unassign)
+        self.reset_btn.pack(side=tk.RIGHT, ipady=6)
+        self.setup_hover_effect(self.reset_btn, COLOR_RED, "#f5e0dc")
+
+        self.sidebar = tk.Frame(self, bg=COLOR_PANEL, width=0, highlightbackground="#313244", highlightthickness=1)
+        self.sidebar.place(x=-self.sidebar_width, y=50, height=510)
+        self.sidebar.pack_propagate(False)
+
+        side_title = tk.Label(self.sidebar, text="Transaction Logs", font=("Arial", 11, "bold"), fg=COLOR_ACCENT, bg=COLOR_PANEL)
+        side_title.pack(pady=10, anchor="w", padx=15)
+
+        self.log_box = tk.Text(self.sidebar, bg=COLOR_BG, fg=COLOR_TEXT, font=("Courier", 9), state=tk.DISABLED, bd=0, wrap=tk.WORD)
+        self.log_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+        
+        self.log_message("⚡ Secure Shell Handshake Initialized. Ready to process records.")
+
+    def animate_progress_bar(self, target_percentage: int, label_text: str, fill_color: str):
+        def step_fill(current_pct):
+            if current_pct > target_percentage:
+                if target_percentage == 100:
+                    self.bar_lbl.config(text="🎉 Process Finalized", fg=COLOR_GREEN)
+                    threading.Thread(target=lambda: winsound.MessageBeep(winsound.MB_ICONASTERISK), daemon=True).start()
+                    self.after(1500, lambda: self.reset_progress_bar())
+                return
+            
+            pixel_width = int((current_pct / 100) * 340)
+            self.bar_canvas.delete("fill_chunk")
+            self.bar_canvas.create_rectangle(0, 0, pixel_width, 14, fill=fill_color, width=0, tags="fill_chunk")
+            self.bar_lbl.config(text=f"⚡ {label_text}: {current_pct}%", fg=COLOR_ACCENT)
+            self.update_idletasks()
+            self.after(8, lambda: step_fill(current_pct + 2))
+            
+        step_fill(0)
+
+    def reset_progress_bar(self):
+        self.bar_canvas.delete("fill_chunk")
+        self.bar_lbl.config(text="Network Transit Idle", fg="#95a5a6")
+
+    def toggle_sidebar(self):
+        if self.sidebar_open:
+            self.animate_sidebar(-self.sidebar_width, False)
+        else:
+            self.animate_sidebar(0, True)
+
+    def animate_sidebar(self, target_x, target_state):
+        def loop_step(current_x):
+            step = 25 if target_x > current_x else -25
+            next_x = current_x + step
+            if (step > 0 and next_x >= target_x) or (step < 0 and next_x <= target_x):
+                self.sidebar.place(x=target_x, width=self.sidebar_width)
+                self.sidebar_open = target_state
+                return
+            self.sidebar.place(x=next_x, width=self.sidebar_width)
+            self.update_idletasks()
+            self.after(10, lambda: loop_step(next_x))
+        start_x = int(self.sidebar.place_info()["x"])
+        loop_step(start_x)
+
+    def setup_hover_effect(self, widget, color_base, color_hover):
+        # FIX: Restored missing Enter/Leave strings so Tkinter reads mouse movement
+        widget.bind("<Enter>", lambda e: widget.config(bg=color_hover))
+        widget.bind("<Leave>", lambda e: widget.config(bg=color_base))
+
+    def log_message(self, text):
+        if not hasattr(self, 'log_box'): return
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        formatted = f"[{timestamp}] {text}\n"
+        self.log_box.configure(state=tk.NORMAL)
+        self.log_box.insert(tk.END, formatted)
+        self.log_box.see(tk.END)
+        self.log_box.configure(state=tk.DISABLED)
+
+    def get_validated_uid(self):
+        uid_str = self.uid_entry.get().strip()
+        if not uid_str.isdigit():
+            messagebox.showerror("Validation Error", "Please provide a valid, numeric Roblox User ID.")
+            return None
+        return int(uid_str)
+
+    def trigger_assign(self):
+        uid = self.get_validated_uid()
+        if not uid: return
+        selected_rank_name = self.rank_combo.get()
+        target_role_id = RANKS[selected_rank_name]
+        
+        self.animate_progress_bar(100, "Encrypting Handshake & Mutating Rank", COLOR_GREEN)
+        self.log_message(f"⌛ Queued task: Move user {uid} to {selected_rank_name}...")
+        asyncio.run_coroutine_threadsafe(self.execute_mutation(uid, "assign", target_role_id), self.loop)
+        self.run_java_companion(uid, "assign", target_role_id)
+
+    def trigger_unassign(self):
+        uid = self.get_validated_uid()
+        if not uid: return
+        
+        self.animate_progress_bar(100, "Clearing Node Context & Flattening", COLOR_RED)
+        self.log_message(f"⌛ Queued task: Reset user {uid} back to baseline community rank...")
+        asyncio.run_coroutine_threadsafe(self.execute_mutation(uid, "unassign", ROLE_DEFAULT_MEMBER), self.loop)
+        self.run_java_companion(uid, "unassign", ROLE_DEFAULT_MEMBER)
+
+    async def execute_mutation(self, user_id: int, action: str, role_id: int):
+        if not roblox_client:
+            await asyncio.sleep(1) 
+            self.after(0, lambda: self.log_message(f"✨ Mock Trace Success: Manipulated target matching ID {user_id}"))
+            return
+        try:
+            group = await roblox_client.get_group(GROUP_ID)
+            member = await group.get_member(user_id)
+            await member.set_role(role_id)
+            if action == "assign":
+                self.after(0, lambda: self.log_message(f"🎉 API Mutation Confirmed: Swapped rank fields for target user {user_id}."))
+            else:
+                self.after(0, lambda: self.log_message(f"🧹 API Mutation Confirmed: Returned user tracking matrix {user_id} to member track."))
+        except Exception as e:
+            err_msg = str(e)
+            self.after(0, lambda: self.log_message(f"❌ Network core error encountered: {err_msg}"))
+
+    def run_java_companion(self, user_id, action, rank_id):
+        if not os.path.exists(JAVA_JAR_FILE): return
+        def run():
+            try:
+                cmd = ["java", "-jar", JAVA_JAR_FILE, str(user_id), str(action), str(rank_id)]
+                res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                self.after(0, lambda: self.log_message(f"☕ [Java Ledger Data Recieved]: {res.stdout.strip()}"))
+            except Exception:
+                pass
+        threading.Thread(target=run, daemon=True).start()
+
+if __name__ == "__main__":
+    # FIX: Corrected variable format from if name == "main":
+    app = AnimatedBotApp()
+    app.mainloop()
+
