@@ -1,0 +1,67 @@
+<!-- Save as index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roblox Web Control Hub</title>
+    <style>
+        body { background: #1e1e2e; color: #cdd6f4; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #252538; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 350px; text-align: center; }
+        h2 { color: #cba6f7; margin-bottom: 20px; }
+        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        input, select { background: #1e1e2e; color: #cdd6f4; outline: none; border: 1px solid #313244; }
+        button { background: #a6e3a1; color: #1e1e2e; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #b4befe; }
+        #status { font-family: monospace; color: #89b4fa; margin-top: 15px; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🌐 WEB ADMIN PORTAL</h2>
+    <input type="text" id="userId" placeholder="Roblox Player User ID">
+    <select id="rankId">
+        <option value="832253071">test (832253071)</option>
+        <option value="790162024">Tester (790162024)</option>
+        <option value="793453002">Lead Developer (793453002)</option>
+        <option value="12884901889">Reset to Member</option>
+    </select>
+    <button onclick="sendRankRequest()">Execute Change</button>
+    <div id="status">System Standby...</div>
+</div>
+
+<script>
+    async function sendRankRequest() {
+        const uid = document.getElementById('userId').value;
+        const rank = document.getElementById('rankId').value;
+        const statusDiv = document.getElementById('status');
+        
+        statusDiv.innerText = "Sending tracking package...";
+
+        try {
+            // Adjust the port to 8000 for Python or 3000 for Node.js
+            const response = await fetch('http://127.0.0', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': 'my66CQTQxNWWk12dQp3sbRSxBmRfLqBKUNUJ_5SPw_Y'
+                },
+                body: JSON.stringify({ user_id: parseInt(uid), action: "assign", target_role_id: parseInt(rank) })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                statusDiv.style.color = "#a6e3a1";
+                statusDiv.innerText = `🎉 Success: ${JSON.stringify(data.detail)}`;
+            } else {
+                statusDiv.style.color = "#f38ba8";
+                statusDiv.innerText = `❌ Error: ${data.detail}`;
+            }
+        } catch (err) {
+            statusDiv.style.color = "#f38ba8";
+            statusDiv.innerText = "❌ Connection Failed.";
+        }
+    }
+</script>
+</body>
+</html>
