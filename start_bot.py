@@ -2,38 +2,41 @@ import os
 import sys
 import subprocess
 
-# List of all required libraries for your pro bot
+# List of required production libraries
 REQUIRED_LIBRARIES = ["roblox", "fastapi", "uvicorn", "pydantic", "colorama"]
 
 def setup_and_launch():
-    print("🤖 --- ROBLOX AUTO-RANK BOOT ENGINE --- 🤖\n")
+    print("🤖 --- ROBLOX ENTERPRISE BOT ENGINE BOOTER --- 🤖\n")
     
-    # 1. Automatically check and install dependencies (Skipped if already installed)
-    print("🔍 Checking system dependencies...")
+    # 1. Force the script to run under the Windows Python Launcher
+    print("🔍 Verifying system environment...")
+    
+    # 2. Automatically check and install dependencies 
     for library in REQUIRED_LIBRARIES:
         try:
             __import__(library)
         except ImportError:
-            print(f"📦 Missing '{library}'. Installing automatically via pip...")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", library])
+            print(f"📦 Missing library '{library}'. Installing automatically...")
+            # Using 'py -m pip' avoids the PATH environment bugs entirely on Windows
+            subprocess.check_call(["py", "-m", "pip", "install", library])
             
-    print("✅ All dependencies verified and ready!\n")
+    print("✅ All system dependencies verified and ready!\n")
     
-    # 2. Verify that main.py exists in the folder
+    # 3. Check for the main script file
     if not os.path.exists("main.py"):
         print("❌ CRITICAL ERROR: Could not find 'main.py' in this folder!")
-        print("Please make sure this script is saved in the same directory as your main bot file.")
+        print("Please save this script in the exact same directory as your main bot file.")
         input("\nPress Enter to exit...")
         sys.exit(1)
         
-    print("🚀 Launching Roblox Hardened Security Core on http://127.0.0.1:8000 ...")
+    print("🚀 Launching Hardened Security Matrix on http://127.0.0.1:8000 ...")
     print("----------------------------------------------------------------------")
     
-    # 3. Boot up the main server script smoothly
+    # 4. Boot up the main engine using the safe Windows launcher
     try:
-        subprocess.run([sys.executable, "main.py"])
+        subprocess.run(["py", "main.py"])
     except KeyboardInterrupt:
-        print("\n🛑 Bot server shut down safely.")
+        print("\n🛑 Bot engine shut down safely.")
 
 if __name__ == "__main__":
     setup_and_launch()

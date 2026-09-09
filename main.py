@@ -18,11 +18,11 @@ logger = logging.getLogger("RobloxSecurityMatrix")
 ROBLOSECURITY_COOKIE = "_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_CAEQAhoGCAIQBBgBIhwKBGR1aWQSFDEyMTY5MTMxNDMwNTU0MTI3ODk2IhQKBXVuYW1lEgtBbGllbnNFdmVudCISCgN1aWQSCzExNjM3ODk3NTcyKAM.bS6F_z94WoemgVBMo7N7EBwxeut_uH_c_IUE-mTDbC9JBAqX6oeK7qrkdhaBt64LFcpd0n36Nj2aSgrXSk5YyoHm6ogoD9w7IGjaXCFbI5I0i9PW4lkoAXe6wvjrJccEBf7soChGRcqAIMxDuNh__xXJ4SyDozRkETnMXkqjjSuKRyi4f7gsAxRU_-RKSBCMBwiXG6eE4rDk3QJXwMYgc0Zf1-YN6u-rsKOS-bu0brYi3if_h3efxOoXUEaKS6l4tcllppbVl_SbMqBl8PWr-xN55MuHOpu9IBBsat_mwvt8WBvtufhSNnTWIkRNkjrKmwVLDuFTY0c2FTrcvE48UhTDXlf2QZI1-U58RyhPBz-vnsOAwc8th92w3esF1vHaem2VVtZWk1pKe7-rU72Oz6weDNqO_zN__VOvB1WX51iAaz6e-nlLuHeEyIMTo4zw9rykQtLkdZptrSAGQXxtWidv6xWp_TWw7LhlazK3V53uWUhG54wRChRcseEF2SgKXyDBOwMvXOlAn985w-6LX9PB_bu_8BBB0CklNdLFkRgJewukffc8YTDX309Of6zz17ucKXRob3nlt252qUPKK9EiQ-y3sk9nWKo012YA5_wTplR1wfqZh5Wj4TFPgOTrsxBSC4RdsWyUoe8r_7Tv9CCY7sSGx_V3QtFxZYrgw8M06D09E174cZKHRPYt6dpGjkF_s2MaD7_A6LDd8bTEh0NFmXwB2DLZo4SjxJc9lXG8Sgcc_eHu3cjA09sJjEwdFgnHF5vewgXitlk6Kv-6CtsZuZB5S191sSJvBrHEcxExq0lWClSUpgAdreQvB5M0N845WilZH31Zm6Dz-ztqNHRGrn60il7cmKRLtEiWI3HT_6OnrKYjU1cFkVZYH1JQnBpfdm-UMpmvuC_vSF8oYk6JCFYMPAjkiEcQAyysmig.mCDwiKSyzmqA5yRilB_fWAAxBkk"
 GROUP_ID = 160052583  
 
-ROLE_ID_1 = 832253071  # "test" Rank
-ROLE_ID_2 = 790162024  # "Tester" Rank
-ROLE_ID_3 = 793453002  # "Lead Developer" Rank
+ROLE_ID_1 = 832253071  # "test" Rank ID (Join)
+ROLE_ID_2 = 790162024  # "Tester" Rank ID
+ROLE_ID_3 = 793453002  # "Lead Developer • 🔨" Rank ID
 
-ROLE_DEFAULT_MEMBER = 12884901889  # "Member" Base Rank
+ROLE_DEFAULT_MEMBER = 12884901889  # "Member" Base Rank ID (Leave)
 
 API_KEY_NAME = "X-API-Key"
 API_SECRET_KEY = "my66CQTQxNWWk12dQp3sbRSxBmRfLqBKUNUJ_5SPw_Y"  
@@ -66,7 +66,6 @@ async def verify_hardened_handshake(request: Request, api_key: str = Depends(API
         logger.critical(f"{Fore.RED}[FIREWALL BLOCK]{Style.RESET_ALL} Rejected invalid authorization signature.")
         raise HTTPException(status_code=403, detail="Access denied. Invalid token context.")
     
-    # Internal bypass for the terminal script file, otherwise check Roblox origin headers
     roblox_header = request.headers.get("Roblox-Id")
     user_agent = request.headers.get("user-agent", "")
     is_terminal = request.headers.get("X-Source") == "Terminal-Script"
@@ -77,36 +76,29 @@ async def verify_hardened_handshake(request: Request, api_key: str = Depends(API
         
     return api_key
 
-async def execute_roblox_api_mutation(user_id: int, action: str, group_role_id: Optional[int] = None):
+@app.post("/api/v4/automation/trigger")
+async def intake_automation_event(payload: AutomationRequest, api_key: str = Depends(verify_hardened_handshake)):
     try:
         group = await client.get_group(GROUP_ID)
-        member = await group.get_member(user_id)
+        member = await group.get_member(payload.user_id)
         
-        if action == "assign":
-            await member.set_role(group_role_id)
-            logger.info(f"{Fore.GREEN}[SECURE SUCCESS]{Style.RESET_ALL} Automated group alignment complete for: {user_id}")
-            commit_to_ledger(user_id, action, group_role_id, "SUCCESS", "Passed all structural firewall gates safely.")
-            return {"status": "success", "detail": f"Locked user target context to role layout {group_role_id}"}
+        if payload.action == "assign":
+            if not payload.target_role_id or payload.target_role_id not in [ROLE_ID_1, ROLE_ID_2, ROLE_ID_3]:
+                raise HTTPException(status_code=400, detail="Invalid rank mapping criteria requested.")
+            await member.set_role(payload.target_role_id)
+            logger.info(f"{Fore.GREEN}[SECURE SUCCESS]{Style.RESET_ALL} Assigned Rank {payload.target_role_id} to User {payload.user_id}")
+            commit_to_ledger(payload.user_id, payload.action, payload.target_role_id, "SUCCESS", "Passed all gates.")
+            return {"status": "success"}
             
-        elif action == "unassign":
+        elif payload.action == "unassign":
             await member.set_role(ROLE_DEFAULT_MEMBER)
-            logger.info(f"{Fore.YELLOW}[SECURE RESET]{Style.RESET_ALL} Successfully reset configuration mapping track for: {user_id}")
-            commit_to_ledger(user_id, action, ROLE_DEFAULT_MEMBER, "SUCCESS", "Demoted back to fallback state configuration context.")
-            return {"status": "success", "detail": "User context tracking successfully rolled back."}
+            logger.info(f"{Fore.YELLOW}[SECURE RESET]{Style.RESET_ALL} Returned User {payload.user_id} to Base Member.")
+            commit_to_ledger(payload.user_id, payload.action, ROLE_DEFAULT_MEMBER, "SUCCESS", "Demated safely.")
+            return {"status": "success"}
             
     except Exception as e:
-        error_msg = str(e)
-        logger.error(f"{Fore.RED}[PLATFORM FAULT]{Style.RESET_ALL} Rejection encountered from backend API: {error_msg}")
-        commit_to_ledger(user_id, action, group_role_id, "FAILED", error_msg)
-        raise HTTPException(status_code=500, detail="Internal connection issue between bot and Roblox backend.")
-
-@app.post("/api/v4/automation/trigger", dependencies=[Depends(verify_hardened_handshake)])
-async def intake_automation_event(payload: AutomationRequest):
-    if payload.action == "assign":
-        if not payload.target_role_id or payload.target_role_id not in [ROLE_ID_1, ROLE_ID_2, ROLE_ID_3]:
-            raise HTTPException(status_code=400, detail="Injection tracking blocked. Specified role destination is illegal.")
-            
-    return await execute_roblox_api_mutation(payload.user_id, payload.action, payload.target_role_id)
+        logger.error(f"{Fore.RED}[PLATFORM FAULT]{Style.RESET_ALL} Rejection: {str(e)}")
+        raise HTTPException(status_code=500, detail="Roblox integration issue.")
 
 if __name__ == "__main__":
     import uvicorn
