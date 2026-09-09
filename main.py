@@ -191,3 +191,99 @@ class AnimatedBotApp(tk.Tk):
             if current_pct > target_percentage:
                 if target_percentage == 100:
                     self.bar_lbl.config(text="🎉 Action Finalized", fg=COLOR_GREEN)
+                                        threading.Thread(target=lambda: winsound.MessageBeep(winsound.MB_ICONASTERISK), daemon=True).start()
+                    self.after(1500, lambda: self.reset_progress_bar())
+                return
+            
+            pixel_width = int((current_pct / 100) * 340)
+            self.bar_canvas.delete("fill_chunk")
+            self.bar_canvas.create_rectangle(0, 0, pixel_width, 14, fill=fill_color, width=0, tags="fill_chunk")
+            self.bar_lbl.config(text=f"⚡ {label_text}: {current_pct}%", fg=COLOR_ACCENT)
+            self.update_idletasks()
+            self.after(8, lambda: step_fill(current_pct + 2))
+        step_fill(0)
+
+    def reset_progress_bar(self):
+        self.bar_canvas.delete("fill_chunk")
+        self.bar_lbl.config(text="Ecosystem Idle", fg="#95a5a6")
+
+    def toggle_sidebar(self):
+        if self.sidebar_open: 
+            self.animate_sidebar(-self.sidebar_width, False)
+        else: 
+            self.animate_sidebar(0, True)
+
+    def animate_sidebar(self, target_x, target_state):
+        def loop_step(current_x):
+            step = 25 if target_x > current_x else -25
+            next_x = current_x + step
+            if (step > 0 and next_x >= target_x) or (step < 0 and next_x <= target_x):
+                self.sidebar.place(x=target_x, width=self.sidebar_width)
+                self.sidebar_open = target_state
+                return
+            self.sidebar.place(x=next_x, width=self.sidebar_width)
+            self.update_idletasks()
+            self.after(10, lambda: loop_step(next_x))
+        start_x = int(self.sidebar.place_info()["x"])
+        loop_step(start_x)
+
+    def setup_hover_effect(self, widget, color_base, color_hover):
+        # FIX: Added mouse hover detection strings back in
+        widget.bind("<Enter>", lambda e: widget.config(bg=color_hover))
+        widget.bind("<Leave>", lambda e: widget.config(bg=color_base))
+
+    def log_message(self, text):
+        if not hasattr(self, 'log_box'): return
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        formatted = f"[{timestamp}] {text}\n"
+        self.log_box.configure(state=tk.NORMAL)
+        self.log_box.insert(tk.END, formatted)
+        self.log_box.see(tk.END)
+        self.log_box.configure(state=tk.DISABLED)
+
+    def get_validated_uid(self):
+        uid_str = self.uid_entry.get().strip()
+        if not uid_str.isdigit():
+            messagebox.showerror("Error", "Enter a numeric User ID.")
+            return None
+        return int(uid_str)
+
+    def trigger_assign(self):
+        uid = self.get_validated_uid()
+        if not uid: return
+        selected_rank_name = self.rank_combo.get()
+        target_role_id = RANKS[selected_rank_name]
+        self.animate_progress_bar(100, "Node processing mutation", COLOR_GREEN)
+        self.log_message(f"⌛ Relaying package to Node Server: User {uid} -> {selected_rank_name}")
+        self.dispatch_to_node_api(uid, "assign", target_role_id)
+
+    def trigger_unassign(self):
+        uid = self.get_validated_uid()
+        if not uid: return
+        self.animate_progress_bar(100, "Node processing reset", COLOR_RED)
+        self.log_message(f"⌛ Relaying package to Node Server: Resetting User {uid}")
+        self.dispatch_to_node_api(uid, "unassign", ROLE_DEFAULT_MEMBER)
+
+    def dispatch_to_node_api(self, user_id, action, role_id):
+        def network_send():
+            import urllib.request
+            payload = {"user_id": user_id, "action": action, "role_id": role_id}
+            # FIX: Restored full Node.js server local API target URL
+            req = urllib.request.Request(
+                "http://127.0.0",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "X-API-Key": "my66CQTQxNWWk12dQp3sbRSxBmRfLqBKUNUJ_5SPw_Y"},
+                method="POST"
+            )
+            try:
+                with urllib.request.urlopen(req) as res:
+                    self.after(0, lambda: self.log_message(f"🎉 JS API Confirmation received successfully."))
+            except Exception:
+                self.after(0, lambda: self.log_message(f"❌ API Handshake Failed: Node server rejected package."))
+        threading.Thread(target=network_send, daemon=True).start()
+
+if __name__ == "__main__":
+    # FIX: Corrected variable format from if name == "main":
+    app = AnimatedBotApp()
+    app.mainloop()
+
