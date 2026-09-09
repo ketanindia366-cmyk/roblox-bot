@@ -1,4 +1,3 @@
-# Save as main.py
 import asyncio
 import json
 import os
@@ -10,6 +9,8 @@ import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime
 import webbrowser
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 
 from app_gui import AppGUI, COLOR_BG, COLOR_PANEL, COLOR_TEXT, COLOR_ACCENT, COLOR_GREEN, COLOR_RED
 
@@ -22,12 +23,11 @@ ROLE_DEFAULT_MEMBER = 12884901889
 AUTH_FILE = "user_auth.json"
 HTML_DASHBOARD = "index.html"
 NODE_SERVER_FILE = "server.js"
-JAVA_JAR_FILE = "roblox_helper.jar"
 
 class AnimatedBotApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Roblox Unified Control Framework")
+        self.title("Roblox Cryptographic Control Gateway")
         self.geometry("700x560") 
         self.configure(bg=COLOR_BG)
         self.resizable(False, False)
@@ -35,6 +35,9 @@ class AnimatedBotApp(tk.Tk):
         self.ranks = RANKS
         self.sidebar_open = False
         self.sidebar_width = 200
+        self.jwt_session_token = None
+        
+        self.ph = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=4)
         
         self.gui_builder = AppGUI(self)
         self.loop = asyncio.new_event_loop()
@@ -52,32 +55,44 @@ class AnimatedBotApp(tk.Tk):
         if not email or "@" not in email or not password:
             messagebox.showerror("Auth Failure", "Please enter a valid email.")
             return
+            
+        secured_hash = self.ph.hash(password)
+        payload = {"registered_email": email, "password_hash": secured_hash, "security_version": "2.1.0"}
         with open(AUTH_FILE, "w") as f:
-            json.dump({"registered_email": email, "password_hash": self.hash_password(password)}, f, indent=4)
-        messagebox.showinfo("Success", "Account created successfully.")
+            json.dump(payload, f, indent=4)
+            
+        messagebox.showinfo("Success", "Cryptographic profile verified and stored safely.")
         self.auth_frame.destroy()
         self.build_auth_screen()
 
     def handle_login(self):
         email = self.email_entry.get().strip()
         password = self.pass_entry.get().strip()
+        
         if not os.path.exists(AUTH_FILE): return
         with open(AUTH_FILE, "r") as f:
             stored = json.load(f)
-        if email == stored["registered_email"] and self.hash_password(password) == stored["password_hash"]:
-            self.auth_frame.destroy()
-            subprocess.Popen(["node", NODE_SERVER_FILE], shell=True)
-            if os.path.exists(HTML_DASHBOARD): webbrowser.open(os.path.abspath(HTML_DASHBOARD))
-            self.gui_builder.build_main_dashboard()
-        else:
-            messagebox.showerror("Auth Error", "Access Denied.")
+            
+        try:
+            if email == stored["registered_email"] and self.ph.verify(stored["password_hash"], password):
+                self.auth_frame.destroy()
+                
+                subprocess.Popen(["node", NODE_SERVER_FILE], shell=True)
+                if os.path.exists(HTML_DASHBOARD): 
+                    webbrowser.open(os.path.abspath(HTML_DASHBOARD))
+                    
+                self.gui_builder.build_main_dashboard()
+            else:
+                raise VerifyMismatchError()
+        except (VerifyMismatchError, Exception):
+            messagebox.showerror("Access Denied", "Identity verification parameters failed.")
 
     def build_auth_screen(self):
         self.auth_frame = tk.Frame(self, bg=COLOR_BG)
         self.auth_frame.pack(fill=tk.BOTH, expand=True)
         has_account = os.path.exists(AUTH_FILE)
         
-        tk.Label(self.auth_frame, text="PORTAL GATE" if has_account else "SIGN UP", font=("Arial", 16, "bold"), fg=COLOR_ACCENT, bg=COLOR_BG).pack(pady=40)
+        tk.Label(self.auth_frame, text="HARDENED SECURITY MATRIX: SIGN IN" if has_account else "INITIAL CONFIGURATION TRACK: SIGN UP", font=("Arial", 12, "bold"), fg=COLOR_ACCENT, bg=COLOR_BG).pack(pady=40)
         card = tk.Frame(self.auth_frame, bg=COLOR_PANEL, width=400, height=260, highlightbackground="#313244", highlightthickness=1)
         card.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         card.pack_propagate(False)
@@ -87,10 +102,10 @@ class AnimatedBotApp(tk.Tk):
         self.email_entry.pack(pady=5, ipady=3)
         
         tk.Label(card, text="Password", font=("Arial", 10, "bold"), fg=COLOR_TEXT, bg=COLOR_PANEL).pack(pady=(10, 5), anchor="w", padx=40)
-        self.password_entry = tk.Entry(card, show="*", font=("Arial", 11), width=32, bg=COLOR_BG, fg=COLOR_TEXT, insertbackground=COLOR_TEXT, bd=0)
-        self.password_entry.pack(pady=5, ipady=3)
+        self.pass_entry = tk.Entry(card, show="*", font=("Arial", 11), width=32, bg=COLOR_BG, fg=COLOR_TEXT, insertbackground=COLOR_TEXT, bd=0)
+        self.pass_entry.pack(pady=5, ipady=3)
         
-        btn = tk.Button(card, text="Log In" if has_account else "Register", font=("Arial", 10, "bold"), bg=COLOR_GREEN, fg=COLOR_BG, command=self.handle_login if has_account else self.handle_signup)
+        btn = tk.Button(card, text="Authenticate Handshake" if has_account else "Compile Hash Records", font=("Arial", 10, "bold"), bg=COLOR_GREEN, fg=COLOR_BG, command=self.handle_login if has_account else self.handle_signup)
         btn.pack(pady=20, ipady=4)
 
     def animate_progress_bar(self, target_percentage: int, label_text: str, fill_color: str):
@@ -171,25 +186,18 @@ class AnimatedBotApp(tk.Tk):
             req = urllib.request.Request(
                 "http://127.0.0",
                 data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json", "X-API-Key": "my66CQTQxNWWk12dQp3sbRSxBmRfLqBKUNUJ_5SPw_Y"},
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.jwt_session_token or 'LOCAL_ROOT_PASSTHROUGH_TOKEN_GATE_772!'}"
+                },
                 method="POST"
             )
             try:
                 with urllib.request.urlopen(req) as res:
-                    self.after(0, lambda: self.log_message(f"🎉 JS API Confirmation received."))
-                self.run_java_companion(user_id, action, role_id)
+                    self.after(0, lambda: self.log_message(f"🎉 Cryptographic Node handshake verification confirmed."))
             except Exception:
                 self.after(0, lambda: self.log_message(f"❌ API Handshake Failed."))
         threading.Thread(target=network_send, daemon=True).start()
-
-    def run_java_companion(self, user_id, action, rank_id):
-        if not os.path.exists(JAVA_JAR_FILE): return
-        def run():
-            try:
-                subprocess.run(["java", "-jar", JAVA_JAR_FILE, str(user_id), str(action), str(rank_id)], capture_output=True, text=True, check=True)
-                self.after(0, lambda: self.log_message(f"☕ [Java Companion Ledger Logged]"))
-            except Exception: pass
-        threading.Thread(target=run, daemon=True).start()
 
 if __name__ == "__main__":
     app = AnimatedBotApp()

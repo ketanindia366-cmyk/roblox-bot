@@ -1,4 +1,3 @@
-# Save as build_msi.py and run it to create your Setup Installer (.msi)
 import os
 import subprocess
 import sys
