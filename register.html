@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Enterprise Portal: Login</title>
+    <title>Enterprise Portal: Register</title>
     <style>
         body { background: #1e1e2e; color: #cdd6f4; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .card { background: #252538; padding: 40px 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 360px; text-align: center; border: 1px solid #313244; }
@@ -10,37 +10,38 @@
         input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: none; box-sizing: border-box; }
         input { background: #1e1e2e; color: #cdd6f4; border: 1px solid #313244; outline: none; font-size: 14px; }
         input:focus { border-color: #cba6f7; }
-        button { background: #a6e3a1; color: #1e1e2e; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        button { background: #cba6f7; color: #1e1e2e; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; }
         button:hover { background: #b4befe; }
         .link-text { margin-top: 15px; font-size: 13px; color: #89b4fa; }
-        .link-text a { color: #cba6f7; text-decoration: none; font-weight: bold; }
+        .link-text a { color: #a6e3a1; text-decoration: none; font-weight: bold; }
         #status { font-family: monospace; color: #f38ba8; margin-top: 15px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🔐 ENTERPRISE GATEWAY</h2>
-    <input type="text" id="email" placeholder="Account Email Address">
-    <input type="password" id="password" placeholder="Security Password">
-    <button onclick="executeLogin()">Authenticate Session</button>
+    <h2>📝 ACCOUNT SYSTEM SIGN UP</h2>
+    <input type="text" id="email" placeholder="Enter Registration Email Address">
+    <input type="password" id="password" placeholder="Create Security Password">
+    <button onclick="executeRegistration()">Compile Admin Profile</button>
     
     <div class="link-text">
-        New deployment? <a href="register.html">Create Admin Account</a>
+        Already registered? <a href="index.html">Sign In Here</a>
     </div>
-    <div id="status"></div>
+    <div id="status" style="color: #a6e3a1;"></div>
 </div>
 
 <script>
     const API_URL = 'http://127.0.0';
 
-    async function executeLogin() {
+    async function executeRegistration() {
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const statusDiv = document.getElementById('status');
 
-        if (!email || !password) {
-            statusDiv.innerText = "❌ Please fill out all input fields.";
+        if (!email || !password || !email.includes('@')) {
+            statusDiv.style.color = "#f38ba8";
+            statusDiv.innerText = "❌ Please enter a valid email structure.";
             return;
         }
 
@@ -51,18 +52,18 @@
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await response.json();
-
             if (response.ok) {
-                // Securely save token context locally inside the browser memory cache
-                localStorage.setItem('session_token', data.sessionToken);
-                // Redirect directly to your active management panel page
-                window.location.href = 'dashboard.html';
+                statusDiv.style.color = "#a6e3a1";
+                statusDiv.innerText = "🎉 Success! Profile hashed. Moving to Sign In...";
+                setTimeout(() => { window.location.href = 'index.html'; }, 2000);
             } else {
+                const data = await response.json();
+                statusDiv.style.color = "#f38ba8";
                 statusDiv.innerText = `❌ ${data.error}`;
             }
-        } catch (err) {
-            statusDiv.innerText = "❌ Connection Refused: Verify server.js is running.";
+        } catch {
+            statusDiv.style.color = "#f38ba8";
+            statusDiv.innerText = "❌ Communication error with local server.";
         }
     }
 </script>
