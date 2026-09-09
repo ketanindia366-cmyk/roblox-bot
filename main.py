@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import subprocess
 import threading
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -10,7 +11,7 @@ from datetime import datetime
 from colorama import init, Fore, Style
 from roblox import Client
 
-# Initialize basic trace structures
+# Initialize colorama mapping parameters
 init(autoreset=True)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -18,16 +19,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 ROBLOSECURITY_COOKIE = "_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_CAEQAhoGCAIQBBgBIhwKBGR1aWQSFDEyMTY5MTMxNDMwNTU0MTI3ODk2IhQKBXVuYW1lEgtBbGllbnNFdmVudCISCgN1aWQSCzExNjM3ODk3NTcyJAM.bS6F_z94WoemgVBMo7N7EBwxeut_uH_c_IUE-mTDbC9JBAqX6oeK7qrkdhaBt64LFcpd0n36Nj2aSgrXSk5YyoHm6ogoD9w7IGjaXCFbI5I0i9PW4lkoAXe6wvjrJccEBf7soChGRcqAIMxDuNh__xXJ4SyDozRkETnMXkqjjSuKRyi4f7gsAxRU_-RKSBCMBwiXG6eE4rDk3QJXwMYgc0Zf1-YN6u-rsKOS-bu0brYi3if_h3efxOoXUEaKS6l4tcllppbVl_SbMqBl8PWr-xN55MuHOpu9IBBsat_mwvt8WBvtufhSNnTWIkRNkjrKmwVLDuFTY0c2FTrcvE48UhTDXlf2QZI1-U58RyhPBz-vnsOAwc8th92w3esF1vHaem2VVtZWk1pKe7-rU72Oz6weDNqO_zN__VOvB1WX51iAaz6e-nlLuHeEyIMTo4zw9rykQtLkdZptrSAGQXxtWidv6xWp_TWw7LhlazK3V53uWUhG54wRChRcseEF2SgKXyDBOwMvXOlAn985w-6LX9PB_bu_8BBB0CklNdLFkRgJewukffc8YTDX309Of6zz17ucKXRob3nlt252qUPKK9EiQ-y3sk9nWKo012YA5_wTplR1wfqZh5Wj4TFPgOTrsxBSC4RdsWyUoe8r_7Tv9CCY7sSGx_V3QtFxZYrgw8M06D09E174cZKHRPYt6dpGjkF_s2MaD7_A6LDd8bTEh0NFmXwB2DLZo4SjxJc9lXG8Sgcc_eHu3cjA09sJjEwdFgnHF5vewgXitlk6Kv-6CtsZuZB5S191sSJvBrHEcxExq0lWClSUpgAdreQvB5M0N845WilZH31Zm6Dz-ztqNHRGrn60il7cmKRLtEiWI3HT_6OnrKYjU1cFkVZYH1JQnBpfdm-UMpmvuC_vSF8oYk6JCFYMPAjkiEcQAyysmig.mCDwiKSyzmqA5yRilB_fWAAxBkk"
 GROUP_ID = 160052583  
 
-# Mapped natively to your exact group values
 RANKS = {
     "test (832253071)": 832253071,
     "Tester (790162024)": 790162024,
     "Lead Developer (793453002)": 793453002
 }
-ROLE_DEFAULT_MEMBER = 12884901889  # Member (Base Rank ID)
+ROLE_DEFAULT_MEMBER = 12884901889  
+
+# Target execution link for Java component dependencies
+JAVA_JAR_FILE = "roblox_helper.jar" 
 # ====================================================================
 
-# Initialize the Roblox client
 roblox_client = Client(ROBLOSECURITY_COOKIE)
 
 class RobloxBotApp(tk.Tk):
@@ -39,33 +41,54 @@ class RobloxBotApp(tk.Tk):
         self.configure(bg="#2c3e50")
         self.resizable(False, False)
         
-        # Async loop for background tasks
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self.start_async_loop, daemon=True).start()
         
         self.setup_ui()
         self.log_message("🤖 System initialized. Ready to process changes.")
         
+        # Check if the optional .jar companion script exists on launch
+        self.verify_java_environment()
+        
     def start_async_loop(self):
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
 
+    def verify_java_environment(self):
+        if os.path.exists(JAVA_JAR_FILE):
+            self.log_message(f"☕ Java module tracking found: {JAVA_JAR_FILE} mapped successfully.")
+        else:
+            self.log_message("ℹ️ No optional .jar layout component loaded in local directory directory tracks.")
+
+    def run_java_jar_task(self, user_id, action, rank_id):
+        """ Runs background commands inside a Java .jar component if attached """
+        if not os.path.exists(JAVA_JAR_FILE):
+            return
+            
+        def execute():
+            try:
+                # Calls: java -jar roblox_helper.jar [user_id] [action] [rank_id]
+                cmd = ["java", "-jar", JAVA_JAR_FILE, str(user_id), str(action), str(rank_id)]
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                self.after(0, lambda: self.log_message(f"☕ [Java Output]: {result.stdout.strip()}"))
+            except Exception as je:
+                self.after(0, lambda: self.log_message(f"⚠️ Java Engine execution fault: {str(je)}"))
+                
+        threading.Thread(target=execute, daemon=True).start()
+
     def setup_ui(self):
-        # Header Label
         header = tk.Label(self, text="⚡ ROBLOX BOT DASHBOARD", font=("Arial", 16, "bold"), fg="#f1c40f", bg="#2c3e50")
         header.pack(pady=15)
         
-        # User ID Frame
         uid_frame = tk.Frame(self, bg="#2c3e50")
         uid_frame.pack(pady=10)
         
         uid_label = tk.Label(uid_frame, text="Roblox User ID:", font=("Arial", 11), fg="#ecf0f1", bg="#2c3e50")
         uid_label.pack(side=tk.LEFT, padx=5)
         
-        self.uid_entry = tk.Entry(uid_frame, font=("Arial", 11), width=20, bg="#34495e", fg="#white", insertbackground="white", bd=0)
+        self.uid_entry = tk.Entry(uid_frame, font=("Arial", 11), width=20, bg="#34495e", fg="white", insertbackground="white", bd=0)
         self.uid_entry.pack(side=tk.LEFT, padx=5)
         
-        # Rank Selection Frame
         rank_frame = tk.Frame(self, bg="#2c3e50")
         rank_frame.pack(pady=10)
         
@@ -76,7 +99,6 @@ class RobloxBotApp(tk.Tk):
         self.rank_combo.set(list(RANKS.keys())[0])
         self.rank_combo.pack(side=tk.LEFT, padx=5)
         
-        # Buttons Frame
         btn_frame = tk.Frame(self, bg="#2c3e50")
         btn_frame.pack(pady=15)
         
@@ -86,7 +108,6 @@ class RobloxBotApp(tk.Tk):
         unassign_btn = tk.Button(btn_frame, text="👋 RESET TO MEMBER", font=("Arial", 10, "bold"), bg="#e74c3c", fg="white", width=18, command=self.trigger_unassign, bd=0)
         unassign_btn.pack(side=tk.LEFT, padx=10)
         
-        # Logging Display Frame
         log_frame = tk.Frame(self, bg="#2c3e50")
         log_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=20)
         
@@ -119,21 +140,22 @@ class RobloxBotApp(tk.Tk):
         selected_rank_name = self.rank_combo.get()
         target_role_id = RANKS[selected_rank_name]
         
-        self.log_message(f"⌛ Queued task: Assign user {uid} to {selected_rank_name}...")
+        self.log_message(f"⌛ Processing: Assign user {uid} to {selected_rank_name}...")
         asyncio.run_coroutine_threadsafe(self.execute_mutation(uid, "assign", target_role_id), self.loop)
+        self.run_java_jar_task(uid, "assign", target_role_id)
 
     def trigger_unassign(self):
         uid = self.get_validated_uid()
         if not uid: return
         
-        self.log_message(f"⌛ Queued task: Demote user {uid} to Base Member...")
+        self.log_message(f"⌛ Processing: Demote user {uid} to Base Member...")
         asyncio.run_coroutine_threadsafe(self.execute_mutation(uid, "unassign", ROLE_DEFAULT_MEMBER), self.loop)
+        self.run_java_jar_task(uid, "unassign", ROLE_DEFAULT_MEMBER)
 
     async def execute_mutation(self, user_id: int, action: str, role_id: int):
         try:
             group = await roblox_client.get_group(GROUP_ID)
             member = await group.get_member(user_id)
-            
             await member.set_role(role_id)
             
             if action == "assign":
