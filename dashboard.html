@@ -6,15 +6,15 @@
     <style>
         body { background: #1e1e2e; color: #cdd6f4; font-family: Arial, sans-serif; margin: 0; padding: 40px; }
         .container { max-width: 800px; margin: 0 auto; }
-        .header-bar { display: flex; justify-content: Brass; justify-content: space-between; align-items: center; border-bottom: 1px solid #313244; padding-bottom: 20px; margin-bottom: 30px; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #313244; padding-bottom: 20px; margin-bottom: 30px; }
         h1 { color: #cba6f7; margin: 0; font-size: 24px; }
-        .logout-btn { background: #f38ba8; color: #1e1e2e; padding: 8px 16px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; }
+        .logout-btn { background: #f38ba8; color: #1e1e2e; padding: 8px 16px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
         .logout-btn:hover { background: #f5e0dc; }
         .rank-table { width: 100%; border-collapse: collapse; background: #252538; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .rank-table th, .rank-table td { padding: 15px 20px; text-align: left; }
         .rank-table th { background: #313244; color: #cba6f7; font-weight: bold; font-size: 14px; text-transform: uppercase; }
         .rank-table tr { border-bottom: 1px solid #1e1e2e; }
-        .rank-table tr:last-child { border-none: none; }
+        .rank-table tr:last-child { border-bottom: none; } /* FIXED TYPO HERE */
         .rank-table td { font-size: 15px; }
         .badge { background: #89b4fa; color: #1e1e2e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; font-family: monospace; }
         #loading { text-align: center; font-size: 16px; color: #89b4fa; font-family: monospace; margin-top: 50px; }
