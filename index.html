@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Roblox Enterprise Web Panel</title>
+    <title>Roblox Secure Web Dashboard</title>
     <style>
         body { background: #1e1e2e; color: #cdd6f4; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .card { background: #252538; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 360px; text-align: center; border: 1px solid #313244; }
@@ -12,12 +12,23 @@
         button { background: #a6e3a1; color: #1e1e2e; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; }
         button:hover { background: #b4befe; }
         #status { font-family: monospace; color: #89b4fa; margin-top: 15px; font-size: 12px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>🌐 REMOTE WEB AUTOMATION HUD</h2>
+<!-- SECURITY GATE PANEL -->
+<div class="card" id="authCard">
+    <h2 id="authTitle">SECURE PORTAL CORE</h2>
+    <input type="text" id="authEmail" placeholder="Enter Account Email Address">
+    <input type="password" id="authPass" placeholder="Enter Password">
+    <button id="authBtn" onclick="handleAuth()">Authenticate</button>
+    <div id="authStatus" style="font-size: 12px; color: #89b4fa; margin-top: 10px;">Checking system state...</div>
+</div>
+
+<!-- MAIN MANAGEMENT PANEL -->
+<div class="card hidden" id="dashboardCard">
+    <h2>🌐 REMOTE WEB DASHBOARD</h2>
     <input type="text" id="userId" placeholder="Enter Roblox Target User ID">
     <select id="rankId">
         <option value="832253071">test (832253071)</option>
@@ -26,26 +37,62 @@
     </select>
     <button onclick="sendRequest('assign')">Assign Rank</button>
     <button onclick="sendRequest('unassign')" style="background: #f38ba8;">Reset Member</button>
-    <div id="status">Ecosystem Online. Awaiting requests...</div>
+    <div id="status">Ecosystem verified. Standby.</div>
 </div>
 
 <script>
+    const serverUrl = 'http://127.0.0.1:3000';
+    let isLoginMode = true;
+
+    async function checkSystemState() {
+        try {
+            const res = await fetch(`${serverUrl}/api/v1/auth-check`);
+            const data = await res.json();
+            isLoginMode = data.hasAccount;
+            document.getElementById('authTitle').innerText = isLoginMode ? "PORTAL GATE: LOGIN" : "PORTAL GATE: SIGN UP";
+            document.getElementById('authBtn').innerText = isLoginMode ? "Log In" : "Sign Up";
+            document.getElementById('authStatus').innerText = "Portal loaded.";
+        } catch {
+            document.getElementById('authStatus').style.color = "#f38ba8";
+            document.getElementById('authStatus').innerText = "❌ Server offline.";
+        }
+    }
+
+    async function handleAuth() {
+        const email = document.getElementById('authEmail').value;
+        const password = document.getElementById('authPass').value;
+        const endpoint = isLoginMode ? 'login' : 'signup';
+
+        try {
+            const res = await fetch(`${serverUrl}/api/v1/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (res.ok) {
+                if (!isLoginMode) {
+                    alert("Account registered. Reloading gateway.");
+                    checkSystemState();
+                } else {
+                    document.getElementById('authCard').classList.add('hidden');
+                    document.getElementById('dashboardCard').classList.remove('hidden');
+                }
+            } else {
+                alert("Authentication failed.");
+            }
+        } catch { alert("Connection error."); }
+    }
+
     async function sendRequest(actionType) {
-        const uid = document.getElementById('userId').value.strip ? document.getElementById('userId').value.strip() : document.getElementById('userId').value;
+        const uid = document.getElementById('userId').value.trim();
         const rank = document.getElementById('rankId').value;
         const statusDiv = document.getElementById('status');
-        
-        if(!uid || isNaN(uid)) {
-            statusDiv.style.color = "#f38ba8";
-            statusDiv.innerText = "❌ Please enter a numeric User ID.";
-            return;
-        }
 
         statusDiv.style.color = "#89b4fa";
         statusDiv.innerText = "Dispatching transaction package...";
 
         try {
-            const response = await fetch('http://127.0.0', {
+            const response = await fetch(`${serverUrl}/api/v1/rank`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -53,20 +100,20 @@
                 },
                 body: JSON.stringify({ user_id: parseInt(uid), action: actionType, role_id: parseInt(rank) })
             });
-
-            const data = await response.json();
             if (response.ok) {
                 statusDiv.style.color = "#a6e3a1";
-                statusDiv.innerText = `🎉 Success! Group adjusted smoothly.`;
+                statusDiv.innerText = "🎉 Success! Group state modified smoothly.";
             } else {
                 statusDiv.style.color = "#f38ba8";
-                statusDiv.innerText = `❌ Rejection: ${data.error}`;
+                statusDiv.innerText = "❌ Transaction rejected.";
             }
-        } catch (err) {
+        } catch {
             statusDiv.style.color = "#f38ba8";
-            statusDiv.innerText = "❌ Node.js Backend is Offline.";
+            statusDiv.innerText = "❌ Request timed out.";
         }
     }
+
+    window.onload = checkSystemState;
 </script>
 </body>
 </html>
