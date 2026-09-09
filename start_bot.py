@@ -1,3 +1,4 @@
+# Save as start_bot.py
 import os
 import sys
 import subprocess
@@ -5,31 +6,30 @@ import subprocess
 REQUIRED_LIBRARIES = ["roblox", "fastapi", "uvicorn", "pydantic", "colorama"]
 
 def setup_and_launch():
-    print("🤖 --- ROBLOX DESKTOP APP ENGINE BOOTER --- 🤖\n")
-    print("🔍 Verifying system environment libraries...")
+    print("🤖 --- ROBLOX ENTERPRISE SYSTEM INITIALIZER --- 🤖\n")
+    print("🔍 Inspecting system environment core libraries...")
     
     for library in REQUIRED_LIBRARIES:
         try:
             __import__(library)
         except ImportError:
-            print(f"📦 Missing library '{library}'. Installing automatically...")
-            # Bypasses Windows Environment PATH bugs cleanly using 'py'
+            print(f"📦 Library '{library}' not found. Initializing silent deployment update...")
             subprocess.check_call(["py", "-m", "pip", "install", library, "--no-cache-dir", "--disable-pip-version-check"])
             
-    print("✅ All system dependencies verified and ready!\n")
+    print("✅ System modules verified successfully!\n")
     
     if not os.path.exists("main.py"):
-        print("❌ CRITICAL ERROR: Could not find 'main.py' in this folder!")
+        print("❌ CRITICAL BOOT ERROR: 'main.py' is missing from this workspace file block.")
         input("\nPress Enter to exit...")
         sys.exit(1)
         
-    print("🚀 Launching Master Automation Core Dashboard...")
+    print("🚀 Mounting Main Interface Dashboard Window...")
     print("----------------------------------------------------------------------")
     
     try:
         subprocess.run(["py", "main.py"])
     except KeyboardInterrupt:
-        print("\n🛑 Bot engine shut down safely.")
+        print("\n🛑 Execution sequence terminated safely by administrator.")
 
 if __name__ == "__main__":
     setup_and_launch()
