@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ecosystem Dashboard: Group Registry</title>
+    <style>
+        body { background: #1e1e2e; color: #cdd6f4; font-family: Arial, sans-serif; margin: 0; padding: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header-bar { display: flex; justify-content: Brass; justify-content: space-between; align-items: center; border-bottom: 1px solid #313244; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { color: #cba6f7; margin: 0; font-size: 24px; }
+        .logout-btn { background: #f38ba8; color: #1e1e2e; padding: 8px 16px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; }
+        .logout-btn:hover { background: #f5e0dc; }
+        .rank-table { width: 100%; border-collapse: collapse; background: #252538; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .rank-table th, .rank-table td { padding: 15px 20px; text-align: left; }
+        .rank-table th { background: #313244; color: #cba6f7; font-weight: bold; font-size: 14px; text-transform: uppercase; }
+        .rank-table tr { border-bottom: 1px solid #1e1e2e; }
+        .rank-table tr:last-child { border-none: none; }
+        .rank-table td { font-size: 15px; }
+        .badge { background: #89b4fa; color: #1e1e2e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; font-family: monospace; }
+        #loading { text-align: center; font-size: 16px; color: #89b4fa; font-family: monospace; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-bar">
+        <h1>📊 ROBLOX GROUP ROSTER DIRECTORY</h1>
+        <button class="logout-btn" onclick="executeLogout()">Sign Out</button>
+    </div>
+
+    <div id="loading">Syncing secure data ledger frames...</div>
+    
+    <table class="rank-table" id="rolesTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Rank Tier</th>
+                <th>Role ID</th>
+                <th>Designation Value</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- Dynamic data rows will inject here natively via JavaScript -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Security check: Kick unauthorized visitors out to login screen immediately
+    if (!localStorage.getItem('session_token')) {
+        window.location.href = 'index.html';
+    }
+
+    async function loadGroupRanks() {
+        const table = document.getElementById('rolesTable');
+        const tbody = document.getElementById('tableBody');
+        const loading = document.getElementById('loading');
+
+        try {
+            // Request live metadata definitions straight from the local node server pipeline
+            const response = await fetch('http://127.0.0', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('session_token')}` }
+            });
+            
+            const roles = await response.json();
+            
+            loading.style.display = 'none';
+            table.style.display = 'table';
+
+            roles.forEach(role => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight: bold; color: #ecf0f1;">${role.name}</td>
+                    <td><span class="badge">${role.id}</span></td>
+                    <td style="color: #a6e3a1; font-family: monospace;">Rank Level: ${role.rank}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch {
+            loading.innerText = "❌ Failed to fetch registry roles. Ensure server.js is running.";
+            loading.style.color = "#f38ba8";
+        }
+    }
+
+    function executeLogout() {
+        localStorage.removeItem('session_token');
+        window.location.href = 'index.html';
+    }
+
+    window.onload = loadGroupRanks;
+</script>
+</body>
+</html>
