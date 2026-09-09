@@ -1,8 +1,5 @@
-# Save as app_gui.py
 import tkinter as tk
-from tkinter import ttk, messagebox
-import threading
-import winsound
+from tkinter import ttk
 
 COLOR_BG = "#1e1e2e"       
 COLOR_PANEL = "#252538"    
