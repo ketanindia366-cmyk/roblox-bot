@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="game-detail-container">
+    <div class="game-header">
+        <div class="game-cover">
+            <img src="/static/images/{{ game.cover_image }}" alt="{{ game.title }}">
+        </div>
+        <div class="game-details">
+            <h1>{{ game.title }}</h1>
+            <p class="game-creator">by <a href="/profile/{{ game.creator.username }}">{{ game.creator.username }}</a></p>
+            <div class="game-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Downloads</span>
+                    <span class="stat-value">{{ game.downloads }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Rating</span>
+                    <span class="stat-value">{{ game.rating }}/5.0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Category</span>
+                    <span class="stat-value">{{ game.category }}</span>
+                </div>
+            </div>
+            <a href="{{ game.game_link }}" class="btn btn-primary btn-large" target="_blank">Play Now</a>
+        </div>
+    </div>
+    
+    <div class="game-description">
+        <h2>Description</h2>
+        <p>{{ game.description }}</p>
+    </div>
+</div>
+{% endblock %}

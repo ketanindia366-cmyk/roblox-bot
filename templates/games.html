@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="games-container">
+    <div class="sidebar">
+        <h3>Categories</h3>
+        <a href="/games?category=all" class="{% if current_category == 'all' %}active{% endif %}">All Games</a>
+        {% for category in categories %}
+            <a href="/games?category={{ category }}" class="{% if current_category == category %}active{% endif %}">{{ category }}</a>
+        {% endfor %}
+        
+        <h3>Sort By</h3>
+        <a href="/games?category={{ current_category }}&sort=latest">Latest</a>
+        <a href="/games?category={{ current_category }}&sort=popular">Most Popular</a>
+        <a href="/games?category={{ current_category }}&sort=rated">Top Rated</a>
+    </div>
+    
+    <div class="games-main">
+        <h2>Games{% if current_category != 'all' %} - {{ current_category }}{% endif %}</h2>
+        {% if games %}
+            <div class="game-grid">
+                {% for game in games %}
+                    <div class="game-card">
+                        <img src="/static/images/{{ game.cover_image }}" alt="{{ game.title }}">
+                        <div class="game-info">
+                            <h3>{{ game.title }}</h3>
+                            <p class="game-creator">by <a href="/profile/{{ game.creator.username }}">{{ game.creator.username }}</a></p>
+                            <p>{{ game.description[:50] }}...</p>
+                            <div class="game-meta">
+                                <span><i class="fas fa-download"></i> {{ game.downloads }}</span>
+                                <span><i class="fas fa-star"></i> {{ game.rating }}</span>
+                            </div>
+                            <a href="/game/{{ game.id }}" class="btn btn-primary">Play Game</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No games found in this category.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
