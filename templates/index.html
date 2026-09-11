@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hero">
+    <div class="hero-content">
+        <h1>Welcome to GameVerse</h1>
+        <p>Discover, Play, and Share Amazing Games</p>
+        <a href="/games" class="btn btn-primary">Explore Games</a>
+        {% if current_user.is_authenticated %}
+            <a href="/dashboard" class="btn btn-secondary">Your Dashboard</a>
+        {% else %}
+            <a href="/register" class="btn btn-secondary">Get Started</a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="featured">
+    <div class="container">
+        <h2>Featured Games</h2>
+        <div class="game-grid">
+            {% for game in featured %}
+                <div class="game-card">
+                    <img src="/static/images/{{ game.cover_image }}" alt="{{ game.title }}">
+                    <div class="game-info">
+                        <h3>{{ game.title }}</h3>
+                        <p>{{ game.description[:50] }}...</p>
+                        <div class="game-meta">
+                            <span><i class="fas fa-download"></i> {{ game.downloads }}</span>
+                            <span><i class="fas fa-star"></i> {{ game.rating }}</span>
+                        </div>
+                        <a href="/game/{{ game.id }}" class="btn btn-sm">View Game</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="categories">
+    <div class="container">
+        <h2>Browse by Category</h2>
+        <div class="category-grid">
+            {% for category in ['Action', 'Adventure', 'Puzzle', 'RPG', 'Racing', 'Simulation'] %}
+                <a href="/games?category={{ category }}" class="category-card">
+                    <i class="fas fa-star"></i>
+                    <span>{{ category }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

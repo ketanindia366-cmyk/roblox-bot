@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Welcome back, {{ user.username }}!</h1>
+        <button class="btn btn-primary" onclick="openUploadModal()">Upload New Game</button>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Games</h3>
+            <p class="stat-number">{{ games|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Downloads</h3>
+            <p class="stat-number">{{ total_downloads }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Member Since</h3>
+            <p>{{ user.created_at.strftime('%B %Y') }}</p>
+        </div>
+    </div>
+    
+    <div class="games-section">
+        <h2>Your Games</h2>
+        {% if games %}
+            <div class="game-grid">
+                {% for game in games %}
+                    <div class="game-card">
+                        <img src="/static/images/{{ game.cover_image }}" alt="{{ game.title }}">
+                        <div class="game-info">
+                            <h3>{{ game.title }}</h3>
+                            <p>{{ game.description[:50] }}...</p>
+                            <div class="game-meta">
+                                <span><i class="fas fa-download"></i> {{ game.downloads }}</span>
+                                <span><i class="fas fa-star"></i> {{ game.rating }}</span>
+                            </div>
+                            <a href="/game/{{ game.id }}" class="btn btn-sm">View</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>You haven't uploaded any games yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div id="uploadModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeUploadModal()">&times;</span>
+        <h2>Upload New Game</h2>
+        <form id="uploadForm">
+            <div class="form-group">
+                <label>Game Title</label>
+                <input type="text" id="title" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="category" required>
+                    <option value="Action">Action</option>
+                    <option value="Adventure">Adventure</option>
+                    <option value="Puzzle">Puzzle</option>
+                    <option value="RPG">RPG</option>
+                    <option value="Racing">Racing</option>
+                    <option value="Simulation">Simulation</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Game Link/URL</label>
+                <input type="url" id="game_link" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload Game</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openUploadModal() {
+    document.getElementById('uploadModal').style.display = 'block';
+}
+
+function closeUploadModal() {
+    document.getElementById('uploadModal').style.display = 'none';
+}
+
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = {
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        category: document.getElementById('category').value,
+        game_link: document.getElementById('game_link').value,
+        cover_image: 'default_game.png'
+    };
+    
+    const response = await fetch('/upload-game', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(formData)
+    });
+    
+    if (response.ok) {
+        location.reload();
+    }
+});
+
+window.onclick = function(event) {
+    const modal = document.getElementById('uploadModal');
+    if (event.target == modal) modal.style.display = 'none';
+}
+</script>
+{% endblock %}

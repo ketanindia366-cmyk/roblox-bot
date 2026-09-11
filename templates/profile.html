@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-info">
+            <h1>{{ user.username }}</h1>
+            <p class="member-since">Member since {{ user.created_at.strftime('%B %Y') }}</p>
+            <p class="bio">{{ user.bio or 'No bio yet' }}</p>
+        </div>
+        <div class="profile-stats">
+            <div class="stat">
+                <h3>{{ games|length }}</h3>
+                <p>Games</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="profile-games">
+        <h2>Games by {{ user.username }}</h2>
+        {% if games %}
+            <div class="game-grid">
+                {% for game in games %}
+                    <div class="game-card">
+                        <img src="/static/images/{{ game.cover_image }}" alt="{{ game.title }}">
+                        <div class="game-info">
+                            <h3>{{ game.title }}</h3>
+                            <p>{{ game.description[:50] }}...</p>
+                            <div class="game-meta">
+                                <span><i class="fas fa-download"></i> {{ game.downloads }}</span>
+                                <span><i class="fas fa-star"></i> {{ game.rating }}</span>
+                            </div>
+                            <a href="/game/{{ game.id }}" class="btn btn-sm">View</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>This creator hasn't uploaded any games yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
